@@ -1,0 +1,10 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.DotSettings.user
+
+# Game, MelonLoader and CairnMP assemblies are never committed.
+*.dll
+game-refs/

@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- MelonLoader hosts mods in .NET 6, whatever SDK builds them. -->
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <AssemblyName>CairnMpModExample</AssemblyName>
+    <RootNamespace>CairnMpModExample</RootNamespace>
+    <Nullable>disable</Nullable>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>NETSDK1138</NoWarn>
+  </PropertyGroup>
+
+  <!--
+    The Cairn copy CairnMP launches. Override with -p:CairnDir=... or the CAIRN_DIR
+    environment variable; on Linux, point it at the game folder inside the Proton prefix.
+  -->
+  <PropertyGroup>
+    <CairnDir Condition="'$(CairnDir)' == '' and '$(CAIRN_DIR)' != ''">$(CAIRN_DIR)</CairnDir>
+    <CairnDir Condition="'$(CairnDir)' == '' and '$(LOCALAPPDATA)' != ''">$(LOCALAPPDATA)\CairnMultiplayerData\game</CairnDir>
+    <MelonLoaderDir>$(CairnDir)\MelonLoader\net6</MelonLoaderDir>
+    <Il2CppAssembliesDir>$(CairnDir)\MelonLoader\Il2CppAssemblies</Il2CppAssembliesDir>
+    <ModsDir>$(CairnDir)\Mods</ModsDir>
+    <DeployMod Condition="'$(DeployMod)' == ''">false</DeployMod>
+  </PropertyGroup>
+
+  <!-- Every reference comes from the player's install: none is copied to the output. -->
+  <ItemGroup>
+    <Reference Include="CairnMultiplayerMod">
+      <HintPath>$(ModsDir)\CairnMultiplayerMod.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="MelonLoader">
+      <HintPath>$(MelonLoaderDir)\MelonLoader.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>$(MelonLoaderDir)\Il2CppInterop.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>$(Il2CppAssembliesDir)\Il2Cppmscorlib.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(Il2CppAssembliesDir)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.InputSystem">
+      <HintPath>$(Il2CppAssembliesDir)\Unity.InputSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="CheckCairnReferences" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="!Exists('$(ModsDir)\CairnMultiplayerMod.dll')"
+           Text="CairnMultiplayerMod.dll not found in '$(ModsDir)'. Install CairnMP, then set CairnDir (see README.md)." />
+    <Error Condition="!Exists('$(Il2CppAssembliesDir)\Il2Cppmscorlib.dll')"
+           Text="IL2CPP assemblies not found in '$(Il2CppAssembliesDir)'. Launch Cairn once with MelonLoader to generate them." />
+  </Target>
+
+  <Target Name="DeployToMods" AfterTargets="Build" Condition="'$(DeployMod)' == 'true'">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModsDir)" />
+    <Message Importance="high" Text="Deployed $(TargetFileName) to $(ModsDir)" />
+  </Target>
+
+</Project>
